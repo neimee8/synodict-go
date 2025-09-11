@@ -8,24 +8,34 @@ func NewGraph() *Graph {
 	return &Graph{adj: make(map[string]Set)}
 }
 
-func (g *Graph) bfs(start string) map[string]bool {
-	visited := make(map[string]bool)
+func (g *Graph) bfs(start string, target ...string) Set {
+	visited := make(Set)
 
 	if !g.HasVertex(start) {
 		return visited
 	}
 
-	visited[start] = true
+	visited[start] = Void{}
 	queue := []string{start}
 	current_index := 0
+	targetSpecified := false
+
+	if len(target) > 0 {
+		targetSpecified = true
+	}
 
 	for len(queue) > current_index {
 		current := queue[current_index]
 		current_index++
 
 		for neighbor := range g.adj[current] {
-			if !visited[neighbor] {
-				visited[neighbor] = true
+			if _, ok := visited[neighbor]; !ok {
+				visited[neighbor] = Void{}
+
+				if targetSpecified && neighbor == target[0] {
+					return visited
+				}
+
 				queue = append(queue, neighbor)
 			}
 		}
@@ -39,7 +49,7 @@ func (g *Graph) AddVertex(vertex string) {
 		return
 	}
 
-	g.adj[vertex] = Set{}
+	g.adj[vertex] = make(Set)
 }
 
 func (g *Graph) HasVertex(vertex string) bool {
@@ -112,7 +122,7 @@ func (g *Graph) RemoveEdgeAndCleanup(a, b string) {
 	}
 }
 
-func (g *Graph) GetConnectedVertexes(vertex string) []string {
+func (g *Graph) GetConnectedVertices(vertex string) []string {
 	var connected []string
 
 	for v := range g.bfs(vertex) {
@@ -123,7 +133,7 @@ func (g *Graph) GetConnectedVertexes(vertex string) []string {
 }
 
 func (g *Graph) ConnectedVertexSize(vertex string) int {
-	return len(g.GetConnectedVertexes(vertex))
+	return len(g.bfs(vertex))
 }
 
 func (g *Graph) AreConnected(a, b string) bool {
@@ -131,7 +141,9 @@ func (g *Graph) AreConnected(a, b string) bool {
 		return false
 	}
 
-	return g.bfs(a)[b]
+	_, ok := g.bfs(a, b)[b]
+
+	return ok
 }
 
 func (g *Graph) Cleanup() {
@@ -144,4 +156,20 @@ func (g *Graph) Cleanup() {
 
 func (g *Graph) Order() int {
 	return len(g.adj)
+}
+
+func (g *Graph) Clone() *Graph {
+	clone := NewGraph()
+
+	for vertex, edges := range g.adj {
+		clonedEdges := make(Set)
+
+		for neighbor := range edges {
+			clonedEdges[neighbor] = Void{}
+		}
+
+		clone.adj[vertex] = clonedEdges
+	}
+
+	return clone
 }
