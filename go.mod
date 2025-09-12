@@ -1,0 +1,1 @@
+module synodict-go

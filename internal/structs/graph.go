@@ -1,4 +1,4 @@
-package internal
+package structs
 
 type Graph struct {
 	adj map[string]Set
@@ -71,6 +71,26 @@ func (g *Graph) RemoveVertex(vertex string) {
 	delete(g.adj, vertex)
 }
 
+func (g *Graph) RemoveVertexIfIsolated(vertex string) {
+	if !g.HasVertex(vertex) {
+		return
+	}
+
+	if len(g.adj[vertex]) == 0 {
+		delete(g.adj, vertex)
+	}
+}
+
+func (g *Graph) GetVertices() []string {
+	var vertices []string
+
+	for vertex := range g.adj {
+		vertices = append(vertices, vertex)
+	}
+
+	return vertices
+}
+
 func (g *Graph) AddEdge(a, b string) {
 	if g.HasEdge(a, b) {
 		return
@@ -113,27 +133,30 @@ func (g *Graph) RemoveEdge(a, b string) {
 func (g *Graph) RemoveEdgeAndCleanup(a, b string) {
 	g.RemoveEdge(a, b)
 
-	if len(g.adj[a]) == 0 {
-		g.RemoveVertex(a)
-	}
-
-	if len(g.adj[b]) == 0 {
-		g.RemoveVertex(b)
-	}
+	g.RemoveVertexIfIsolated(a)
+	g.RemoveVertexIfIsolated(b)
 }
 
 func (g *Graph) GetConnectedVertices(vertex string) []string {
 	var connected []string
 
 	for v := range g.bfs(vertex) {
-		connected = append(connected, v)
+		if vertex != v {
+			connected = append(connected, v)
+		}
 	}
 
 	return connected
 }
 
 func (g *Graph) ConnectedVertexSize(vertex string) int {
-	return len(g.bfs(vertex))
+	visited := g.bfs(vertex)
+
+	if len(visited) == 0 {
+		return 0
+	} else {
+		return len(visited) - 1
+	}
 }
 
 func (g *Graph) AreConnected(a, b string) bool {
@@ -147,10 +170,8 @@ func (g *Graph) AreConnected(a, b string) bool {
 }
 
 func (g *Graph) Cleanup() {
-	for vertex, edges := range g.adj {
-		if len(edges) == 0 {
-			delete(g.adj, vertex)
-		}
+	for vertex := range g.adj {
+		g.RemoveVertexIfIsolated(vertex)
 	}
 }
 
