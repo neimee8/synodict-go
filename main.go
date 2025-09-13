@@ -1,15 +1,25 @@
 package main
 
 import (
-	"bufio"
-	"os"
-	"strings"
-	"synodict-go/internal/utils"
+	"synodict-go/internal/cmdpkg"
+	"synodict-go/internal/iopkg"
+	"synodict-go/internal/structpkg"
 )
 
 func main() {
-	reader := bufio.NewReader(os.Stdin)
+	IORequestCh := make(chan iopkg.IORequest)
+	exitCh := make(chan structpkg.Void)
 
-	input, _ := reader.ReadString('\n')
-	utils.CmdDispatch(strings.TrimSpace(input))
+	go iopkg.Request(IORequestCh, exitCh)
+	go cmdpkg.Run(IORequestCh, exitCh)
+
+	IORequestCh <- iopkg.IORequest{
+		Out:     true,
+		In:      false,
+		Prompts: []string{"type \"help\" for instructions"},
+	}
+
+	<-exitCh
+
+	close(IORequestCh)
 }
