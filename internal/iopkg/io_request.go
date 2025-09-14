@@ -8,4 +8,5 @@ type IORequest struct {
 	InCh    chan string
 
 	InValidationRegexes []string
+	InErrorPrompts      []string
 }

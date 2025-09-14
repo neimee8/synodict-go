@@ -2,13 +2,14 @@ package cmdpkg
 
 import (
 	"strings"
+	"synodict-go/internal/common"
 	"synodict-go/internal/iopkg"
 	"synodict-go/internal/structpkg"
 )
 
 var dict = structpkg.NewDict()
 
-func Run(IORequestCh chan iopkg.IORequest, exitCh chan structpkg.Void) {
+func Run(IORequestCh chan iopkg.IORequest, exitCh chan common.Void) {
 	for {
 		request := iopkg.IORequest{
 			Out:                 false,
@@ -29,7 +30,7 @@ func Run(IORequestCh chan iopkg.IORequest, exitCh chan structpkg.Void) {
 				args = append(args, strings.Trim(cmdParts[i], "\""))
 			}
 
-			output := cmdHandlers[op](dict, args)
+			output := cmdHandlers[op](dict, args, IORequestCh)
 
 			if len(output) > 0 {
 				IORequestCh <- iopkg.IORequest{

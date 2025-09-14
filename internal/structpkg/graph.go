@@ -5,14 +5,15 @@ import (
 	"encoding/gob"
 	"fmt"
 	"strings"
+	"synodict-go/internal/common"
 )
 
 type Graph struct {
-	adj map[string]Set
+	adj map[string]common.Set
 }
 
 func NewGraph() *Graph {
-	return &Graph{adj: make(map[string]Set)}
+	return &Graph{adj: make(map[string]common.Set)}
 }
 
 func validateGraph(g *Graph) error {
@@ -43,14 +44,14 @@ func validateGraph(g *Graph) error {
 	return nil
 }
 
-func (g *Graph) bfs(start string, target ...string) Set {
-	visited := make(Set)
+func (g *Graph) bfs(start string, target ...string) common.Set {
+	visited := make(common.Set)
 
 	if !g.HasVertex(start) {
 		return visited
 	}
 
-	visited[start] = Void{}
+	visited[start] = common.Void{}
 	queue := []string{start}
 	current_index := 0
 	targetSpecified := false
@@ -65,7 +66,7 @@ func (g *Graph) bfs(start string, target ...string) Set {
 
 		for neighbor := range g.adj[current] {
 			if _, ok := visited[neighbor]; !ok {
-				visited[neighbor] = Void{}
+				visited[neighbor] = common.Void{}
 
 				if targetSpecified && neighbor == target[0] {
 					return visited
@@ -92,7 +93,7 @@ func (g *Graph) AddVertex(vertex string) error {
 		return fmt.Errorf("graph validation error: vertex cannot be empty string")
 	}
 
-	g.adj[vertex] = make(Set)
+	g.adj[vertex] = make(common.Set)
 
 	return nil
 }
@@ -137,7 +138,7 @@ func (g *Graph) GetVertices() []string {
 }
 
 func (g *Graph) GetConnectivityGroups() [][]string {
-	visited := make(Set)
+	visited := make(common.Set)
 	var groups [][]string
 
 	for vertex := range g.adj {
@@ -149,7 +150,7 @@ func (g *Graph) GetConnectivityGroups() [][]string {
 
 		for v := range g.bfs(vertex) {
 			group = append(group, v)
-			visited[v] = Void{}
+			visited[v] = common.Void{}
 		}
 
 		groups = append(groups, group)
@@ -183,8 +184,8 @@ func (g *Graph) AddEdge(a, b string) error {
 		}
 	}
 
-	g.adj[a][b] = Void{}
-	g.adj[b][a] = Void{}
+	g.adj[a][b] = common.Void{}
+	g.adj[b][a] = common.Void{}
 
 	return nil
 }
@@ -212,6 +213,20 @@ func (g *Graph) RemoveEdgeAndCleanup(a, b string) {
 
 	g.RemoveVertexIfIsolated(a)
 	g.RemoveVertexIfIsolated(b)
+}
+
+func (g *Graph) GetNeighbors(vertex string) []string {
+	var neighbors []string
+
+	if !g.HasVertex(vertex) {
+		return neighbors
+	}
+
+	for neighbor := range g.adj[vertex] {
+		neighbors = append(neighbors, neighbor)
+	}
+
+	return neighbors
 }
 
 func (g *Graph) GetConnectedVertices(vertex string) []string {
@@ -256,14 +271,18 @@ func (g *Graph) Order() int {
 	return len(g.adj)
 }
 
+func (g *Graph) IsEmpty() bool {
+	return g.Order() == 0
+}
+
 func (g *Graph) Clone() *Graph {
 	clone := NewGraph()
 
 	for vertex, neighbors := range g.adj {
-		clonedNeighbors := make(Set)
+		clonedNeighbors := make(common.Set)
 
 		for neighbor := range neighbors {
-			clonedNeighbors[neighbor] = Void{}
+			clonedNeighbors[neighbor] = common.Void{}
 		}
 
 		clone.adj[vertex] = clonedNeighbors
@@ -282,6 +301,11 @@ func (g *Graph) SerializeGob() []byte {
 
 func DeserializeGob(data []byte) (*Graph, error) {
 	g := NewGraph()
+
+	if len(data) == 0 {
+		return g, nil
+	}
+
 	dec := gob.NewDecoder(bytes.NewReader(data))
 
 	if err := dec.Decode(&g); err != nil {
@@ -315,6 +339,11 @@ func (g *Graph) SerializeCsv() []byte {
 
 func DeserializeCsv(data []byte) (*Graph, error) {
 	g := NewGraph()
+
+	if len(data) == 0 {
+		return g, nil
+	}
+
 	text := strings.TrimSpace(string(data))
 	text = strings.ReplaceAll(text, "\r\n", "\n")
 	lines := strings.Split(text, "\n")
@@ -330,10 +359,10 @@ func DeserializeCsv(data []byte) (*Graph, error) {
 			return nil, fmt.Errorf("graph validation failed: duplicate vertex %q found", vertices[0])
 		}
 
-		g.adj[vertices[0]] = make(Set)
+		g.adj[vertices[0]] = make(common.Set)
 
 		for i := 1; i < len(vertices); i++ {
-			g.adj[vertices[0]][vertices[i]] = Void{}
+			g.adj[vertices[0]][vertices[i]] = common.Void{}
 		}
 	}
 
@@ -368,6 +397,11 @@ func (g *Graph) SerializeCsvCondensed() []byte {
 
 func DeserializeCsvCondensed(data []byte) (*Graph, error) {
 	g := NewGraph()
+
+	if len(data) == 0 {
+		return g, nil
+	}
+
 	text := strings.TrimSpace(string(data))
 	text = strings.ReplaceAll(text, "\r\n", "\n")
 	lines := strings.Split(text, "\n")
@@ -397,4 +431,42 @@ func DeserializeCsvCondensed(data []byte) (*Graph, error) {
 	}
 
 	return g, nil
+}
+
+func (g *Graph) Merge(graph *Graph) error {
+	err := validateGraph(graph)
+
+	if err != nil {
+		return err
+	}
+
+	g.MergeUnsafe(graph)
+	return nil
+}
+
+func (g *Graph) MergeUnsafe(graph *Graph) {
+	for vertex, neighbors := range graph.adj {
+		if _, ok := g.adj[vertex]; !ok {
+			g.adj[vertex] = neighbors
+		} else {
+			for neighbor := range neighbors {
+				g.adj[vertex][neighbor] = common.Void{}
+			}
+		}
+	}
+}
+
+func (g *Graph) FromGraph(graph *Graph) error {
+	err := validateGraph(graph)
+
+	if err != nil {
+		return err
+	}
+
+	g.FromGraphUnsafe(graph)
+	return nil
+}
+
+func (g *Graph) FromGraphUnsafe(graph *Graph) {
+	g.adj = graph.adj
 }

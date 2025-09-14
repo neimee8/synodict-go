@@ -2,13 +2,13 @@ package main
 
 import (
 	"synodict-go/internal/cmdpkg"
+	"synodict-go/internal/common"
 	"synodict-go/internal/iopkg"
-	"synodict-go/internal/structpkg"
 )
 
 func main() {
 	IORequestCh := make(chan iopkg.IORequest)
-	exitCh := make(chan structpkg.Void)
+	exitCh := make(chan common.Void)
 
 	go iopkg.Request(IORequestCh, exitCh)
 	go cmdpkg.Run(IORequestCh, exitCh)
