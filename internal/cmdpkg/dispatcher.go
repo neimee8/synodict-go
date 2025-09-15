@@ -21,7 +21,11 @@ func Run(IORequestCh chan iopkg.IORequest, exitCh chan common.Void) {
 		IORequestCh <- request
 
 		select {
-		case cmd := <-request.InCh:
+		case cmd, ok := <-request.InCh:
+			if !ok {
+				return
+			}
+
 			cmdParts := strings.Fields(cmd)
 			op := cmdParts[0]
 			args := []string{}

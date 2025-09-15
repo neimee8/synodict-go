@@ -5,7 +5,13 @@ import (
 	"os"
 )
 
-func Write(data []byte, path string) error {
+var BOM = []byte{0xEF, 0xBB, 0xBF}
+
+func Write(data []byte, path string, addBom bool) error {
+	if addBom {
+		data = append(BOM, data...)
+	}
+
 	err := os.WriteFile(path, data, 0644)
 
 	if err != nil {
@@ -20,6 +26,10 @@ func Read(path string) ([]byte, error) {
 
 	if err != nil {
 		return data, fmt.Errorf("file read failed: %w", err)
+	}
+
+	if len(data) >= 3 && data[0] == BOM[0] && data[1] == BOM[1] && data[2] == BOM[2] {
+		data = data[3:]
 	}
 
 	return data, nil

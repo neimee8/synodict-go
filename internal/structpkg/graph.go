@@ -12,8 +12,16 @@ type Graph struct {
 	adj map[string]common.Set
 }
 
+type graphDTO struct {
+	Adj map[string]common.Set
+}
+
 func NewGraph() *Graph {
 	return &Graph{adj: make(map[string]common.Set)}
+}
+
+func newGraphDTO() *graphDTO {
+	return &graphDTO{Adj: make(map[string]common.Set)}
 }
 
 func validateGraph(g *Graph) error {
@@ -278,6 +286,10 @@ func (g *Graph) IsEmpty() bool {
 func (g *Graph) Clone() *Graph {
 	clone := NewGraph()
 
+	if g == nil || g.adj == nil {
+		return clone
+	}
+
 	for vertex, neighbors := range g.adj {
 		clonedNeighbors := make(common.Set)
 
@@ -291,19 +303,55 @@ func (g *Graph) Clone() *Graph {
 	return clone
 }
 
+func (g *graphDTO) cloneDTO() *graphDTO {
+	clone := newGraphDTO()
+
+	if g == nil || g.Adj == nil {
+		return clone
+	}
+
+	for vertex, neighbors := range g.Adj {
+		clonedNeighbors := make(common.Set)
+
+		for neighbor := range neighbors {
+			clonedNeighbors[neighbor] = common.Void{}
+		}
+
+		clone.Adj[vertex] = clonedNeighbors
+	}
+
+	return clone
+}
+
+func (g *Graph) makeDTO() *graphDTO {
+	clone := g.Clone()
+	dto := newGraphDTO()
+	dto.Adj = clone.adj
+
+	return dto
+}
+
+func (g *graphDTO) fromDTO() *Graph {
+	clone := g.cloneDTO()
+	graph := NewGraph()
+	graph.adj = clone.Adj
+
+	return graph
+}
+
 func (g *Graph) SerializeGob() []byte {
 	var buf bytes.Buffer
 	enc := gob.NewEncoder(&buf)
-	enc.Encode(g)
+	enc.Encode(g.makeDTO())
 
 	return buf.Bytes()
 }
 
 func DeserializeGob(data []byte) (*Graph, error) {
-	g := NewGraph()
+	g := newGraphDTO()
 
 	if len(data) == 0 {
-		return g, nil
+		return NewGraph(), nil
 	}
 
 	dec := gob.NewDecoder(bytes.NewReader(data))
@@ -312,13 +360,14 @@ func DeserializeGob(data []byte) (*Graph, error) {
 		return nil, fmt.Errorf("graph deserialization failed: %w", err)
 	}
 
-	err := validateGraph(g)
+	graph := g.fromDTO()
+	err := validateGraph(graph)
 
 	if err != nil {
 		return nil, err
 	}
 
-	return g, nil
+	return graph, nil
 }
 
 func (g *Graph) SerializeCsv() []byte {
@@ -331,7 +380,7 @@ func (g *Graph) SerializeCsv() []byte {
 			fmt.Fprintf(&buf, ";%s", neighbor)
 		}
 
-		fmt.Fprint(&buf, '\n')
+		buf.WriteByte('\n')
 	}
 
 	return buf.Bytes()

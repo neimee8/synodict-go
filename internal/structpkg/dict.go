@@ -130,7 +130,7 @@ func (d *Dict) AddSynonyms(words ...string) []error {
 
 	default:
 		for i := 0; i < len(filtered)-1; i++ {
-			d.graph.AddEdge(words[i], words[i+1])
+			d.graph.AddEdge(filtered[i], filtered[i+1])
 		}
 	}
 
@@ -305,7 +305,13 @@ func (d *Dict) Export(path, format string) error {
 	}
 
 	data := serializator()
-	err := stgpkg.Write(data, path)
+	addBom := true
+
+	if format == "gob" {
+		addBom = false
+	}
+
+	err := stgpkg.Write(data, path, addBom)
 
 	return err
 }
@@ -317,7 +323,7 @@ func (d *Dict) Import(path, format string) error {
 		return fmt.Errorf("import failed: format %s is not supported", format)
 	}
 
-	data, err := stgpkg.Read(format)
+	data, err := stgpkg.Read(path)
 
 	if err != nil {
 		return err

@@ -2,6 +2,7 @@ package cmdpkg
 
 import (
 	"fmt"
+	"strings"
 	"synodict-go/internal/common"
 	"synodict-go/internal/iopkg"
 	"synodict-go/internal/stgpkg"
@@ -22,7 +23,7 @@ func askUserChoice(IORequestCh chan iopkg.IORequest) bool {
 	IORequestCh <- request
 	response := <-request.InCh
 
-	return response != "n"
+	return response == "y"
 }
 
 func collectErrors(errs []error, log *[]string) {
@@ -232,7 +233,7 @@ func groups(d *structpkg.Dict, args []string, _ chan iopkg.IORequest) []string {
 			)
 		}
 
-		if i < len(group)-1 {
+		if i < len(groups)-1 {
 			response = append(response, "")
 		}
 	}
@@ -293,16 +294,16 @@ func importDict(d *structpkg.Dict, args []string, IORequestCh chan iopkg.IOReque
 	stages := [][]string{
 		{
 			"please choose the import format:",
-			"gob        - GOB",
-			"csv        - CSV",
-			"csvc       - CSV condensed",
-			"c (cancel) - go back without import",
-			"done       - stop execution",
+			"gob  - GOB",
+			"csv  - CSV",
+			"csvc - CSV condensed",
+			"c    - go back without import",
+			"done - stop execution",
 		},
 		{
 			"please specify the file location:",
-			"c (cancel) - go back to the previous step",
-			"done       - stop execution",
+			"c    - go back to the previous step",
+			"done - stop execution",
 		},
 	}
 
@@ -460,6 +461,8 @@ func importDict(d *structpkg.Dict, args []string, IORequestCh chan iopkg.IOReque
 				switch response {
 				case "y":
 					exportDict(d, args, IORequestCh)
+					d.Clear()
+					stage++
 
 				case "n":
 					d.Clear()
@@ -486,23 +489,22 @@ func exportDict(d *structpkg.Dict, args []string, IORequestCh chan iopkg.IOReque
 	stages := [][]string{
 		{
 			"please choose the export format:",
-			"gob        - GOB",
-			"csv        - CSV",
-			"csvc       - CSV condensed",
-			"c (cancel) - go back without export",
-			"done       - stop execution",
+			"gob  - GOB",
+			"csv  - CSV",
+			"csvc - CSV condensed",
+			"c    - go back without export",
+			"done - stop execution",
 		},
 		{
 			"please specify the desired file location:",
-			"c (cancel) - go back to the previous step",
-			"done       - stop execution",
+			"c    - go back to the previous step",
+			"done - stop execution",
 		},
 	}
 
 	stage := 0
 	format := ""
 	path := ""
-	fullPath := ""
 
 	for stage < len(stages) && stage >= 0 {
 		errorPrompts := []string{}
@@ -557,8 +559,11 @@ func exportDict(d *structpkg.Dict, args []string, IORequestCh chan iopkg.IOReque
 			path = response
 
 			for {
-				fullPath = path + common.FormatFileExtensions[format]
-				err := d.Export(fullPath, format)
+				if !strings.HasSuffix(path, common.FormatFileExtensions[format]) {
+					path += common.FormatFileExtensions[format]
+				}
+
+				err := d.Export(path, format)
 
 				if err == nil {
 					stage++
@@ -586,33 +591,33 @@ func exportDict(d *structpkg.Dict, args []string, IORequestCh chan iopkg.IOReque
 		return []string{"export canceled"}
 	}
 
-	return []string{fmt.Sprintf("exported successfully to %s", fullPath)}
+	return []string{fmt.Sprintf("exported successfully to %s", path)}
 }
 
 func help(d *structpkg.Dict, args []string, IORequestCh chan iopkg.IORequest) []string {
 	return []string{
 		"available commands:",
-		"add \"word1\"...                 - adds each word to the dictionary if not already present, and links them as synonyms",
-		"add-words \"word1\"...           - adds each word to the dictionary if not already present (does not link them as synonyms)",
-		"remove \"word1\"...              - removes each word from the dictionary if already present",
+		"add \"word1\"...               - adds each word to the dictionary if not already present, and links them as synonyms",
+		"add-words \"word1\"...         - adds each word to the dictionary if not already present (does not link them as synonyms)",
+		"remove \"word1\"...            - removes each word from the dictionary if already present",
 		"unlink \"word1\" \"word2\"       - removes synonym link between words (does not delete the words themselves)",
 		"unlink-clean \"word1\" \"word2\" - removes synonym link between words (deletes words if they have no other synonyms)",
-		"check \"word1\" \"word2\".       - checks if the words are synonyms (directly or transitively)",
+		"check \"word1\" \"word2\"        - checks if the words are synonyms (directly or transitively)",
 		"check-direct \"word1\" \"word2\" - checks if the words are directly linked as synonyms",
-		"exists \"word\"                  - checks if the word exists in the dictionary",
-		"count \"word\"                   - prints the number of synonyms of the word",
-		"synonyms \"word\"                - prints all synonyms of the word",
-		"direct-synonyms \"word\"         - prints only directly linked synonyms (words that were explicitly connected)",
-		"count-groups                     - prints the number of synonym groups",
-		"groups                           - prints all synonym groups",
-		"count-words                      - prints the total number of words in the dictionary",
-		"words                            - prints all words",
-		"cleanup                          - removes words that have no synonyms from the dictionary",
-		"clear                            - clears the dictionary (warning: cannot be undone)",
-		"import                           - import dictionary (supports gob/csv); if current dictionary is not empty, you will be prompted to save, merge, or overwrite",
-		"export                           - export dictionary (supports gob/csv)",
-		"help                             - prints this help message",
-		"done                             - stops execution",
+		"exists \"word\"                - checks if the word exists in the dictionary",
+		"count \"word\"                 - prints the number of synonyms of the word",
+		"synonyms \"word\"              - prints all synonyms of the word",
+		"direct-synonyms \"word\"       - prints only directly linked synonyms (words that were explicitly connected)",
+		"count-groups                 - prints the number of synonym groups",
+		"groups                       - prints all synonym groups",
+		"count-words                  - prints the total number of words in the dictionary",
+		"words                        - prints all words",
+		"cleanup                      - removes words that have no synonyms from the dictionary",
+		"clear                        - clears the dictionary (warning: cannot be undone)",
+		"import                       - import dictionary (supports gob/csv); if current dictionary is not empty, you will be prompted to save, merge, or overwrite",
+		"export                       - export dictionary (supports gob/csv)",
+		"help                         - prints this help message",
+		"done                         - stops execution",
 	}
 }
 

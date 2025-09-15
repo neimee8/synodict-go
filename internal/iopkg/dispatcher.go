@@ -27,7 +27,7 @@ func Request(requests chan IORequest, exitCh chan common.Void) {
 			input, exit := scan(r.InValidationRegexes, r.InErrorPrompts)
 
 			if exit {
-				fmt.Println(" goodbye!")
+				fmt.Println("~ goodbye!")
 				close(r.InCh)
 
 				exitCh <- common.Void{}
@@ -46,13 +46,13 @@ func Request(requests chan IORequest, exitCh chan common.Void) {
 
 func write(prompts []string) {
 	for _, p := range prompts {
-		fmt.Fprintln(os.Stdout, ""+p)
+		fmt.Fprintln(os.Stdout, "~ "+p)
 	}
 }
 
 func scan(regexes, errPrompts []string) (string, bool) {
 	for {
-		fmt.Print(" > ")
+		fmt.Print(" ~~~> ")
 
 		input, err := reader.ReadString('\n')
 
@@ -71,10 +71,12 @@ func scan(regexes, errPrompts []string) (string, bool) {
 		}
 
 		if len(errPrompts) == 0 {
-			fmt.Fprintln(os.Stderr, "ERROR> incorrect syntax, type \"help\"")
+			fmt.Fprintln(os.Stderr, "ERROR ~ incorrect syntax, type \"help\"")
 		} else {
-			for _, prompt := range errPrompts {
-				fmt.Fprintf(os.Stderr, "ERROR> %s\n", prompt)
+			fmt.Fprintf(os.Stderr, "ERROR ~ %s\n", errPrompts[0])
+
+			for i := 1; i < len(errPrompts); i++ {
+				fmt.Fprintf(os.Stderr, "~ %s\n", errPrompts[i])
 			}
 		}
 	}
