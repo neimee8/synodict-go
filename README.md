@@ -11,7 +11,7 @@ It stores words and their relations as an undirected graph, allowing you to add 
   - whether a word exists in the dictionary
   - whether two words are synonyms (direct or transitive)
   - whether a direct link exists between two words
-- List all direct synonyms of a word
+- List all direct-linked synonyms of a word
 - Import/export dictionaries in:
   - **GOB** (Go serialization format)
   - **CSV** (Saves the original word order)
