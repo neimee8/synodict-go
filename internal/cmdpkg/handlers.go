@@ -29,7 +29,7 @@ func askUserChoice(IORequestCh chan iopkg.IORequest) bool {
 func collectErrors(errs []error, log *[]string) {
 	if len(errs) > 0 {
 		for _, err := range errs {
-			*log = append(*log, err.Error())
+			*log = append(*log, "ERROR ~ "+err.Error())
 		}
 	}
 }
@@ -68,7 +68,7 @@ func unlink(d *structpkg.Dict, args []string, _ chan iopkg.IORequest) []string {
 }
 
 func unlinkClean(d *structpkg.Dict, args []string, IORequestCh chan iopkg.IORequest) []string {
-	if !askUserChoice(IORequestCh) {
+	if !d.IsEmpty() && !askUserChoice(IORequestCh) {
 		return []string{}
 	}
 
@@ -220,6 +220,11 @@ func groups(d *structpkg.Dict, args []string, _ chan iopkg.IORequest) []string {
 	groups := d.GetSynonymGroups()
 	response := []string{}
 
+	if len(groups) == 0 {
+		response = append(response, "dictionary has no groups yet")
+		return response
+	}
+
 	for i, group := range groups {
 		response = append(
 			response,
@@ -260,6 +265,11 @@ func words(d *structpkg.Dict, args []string, _ chan iopkg.IORequest) []string {
 	words := d.GetWords()
 	response := []string{}
 
+	if len(words) == 0 {
+		response = append(response, "dictionary has no groups yet")
+		return response
+	}
+
 	for i, word := range words {
 		response = append(
 			response,
@@ -271,6 +281,10 @@ func words(d *structpkg.Dict, args []string, _ chan iopkg.IORequest) []string {
 }
 
 func cleanup(d *structpkg.Dict, args []string, IORequestCh chan iopkg.IORequest) []string {
+	if d.IsEmpty() {
+		return []string{"dictionary is already empty"}
+	}
+
 	if !askUserChoice(IORequestCh) {
 		return []string{}
 	}
@@ -281,6 +295,10 @@ func cleanup(d *structpkg.Dict, args []string, IORequestCh chan iopkg.IORequest)
 }
 
 func clear(d *structpkg.Dict, args []string, IORequestCh chan iopkg.IORequest) []string {
+	if d.IsEmpty() {
+		return []string{"dictionary is already empty"}
+	}
+
 	if !askUserChoice(IORequestCh) {
 		return []string{}
 	}
@@ -374,7 +392,7 @@ func importDict(d *structpkg.Dict, args []string, IORequestCh chan iopkg.IOReque
 				request = iopkg.IORequest{
 					Out:     true,
 					In:      true,
-					Prompts: []string{err.Error()},
+					Prompts: []string{"ERROR ~ " + err.Error()},
 					InCh:    make(chan string),
 				}
 
@@ -486,6 +504,10 @@ func importDict(d *structpkg.Dict, args []string, IORequestCh chan iopkg.IOReque
 }
 
 func exportDict(d *structpkg.Dict, args []string, IORequestCh chan iopkg.IORequest) []string {
+	if d.IsEmpty() {
+		return []string{"dictionary is empty"}
+	}
+
 	stages := [][]string{
 		{
 			"please choose the export format:",
@@ -573,7 +595,7 @@ func exportDict(d *structpkg.Dict, args []string, IORequestCh chan iopkg.IOReque
 				request = iopkg.IORequest{
 					Out:     true,
 					In:      true,
-					Prompts: []string{err.Error()},
+					Prompts: []string{"ERROR ~ " + err.Error()},
 					InCh:    make(chan string),
 				}
 

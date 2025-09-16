@@ -71,9 +71,9 @@ func scan(regexes, errPrompts []string) (string, bool) {
 		}
 
 		if len(errPrompts) == 0 {
-			fmt.Fprintln(os.Stderr, "ERROR ~ incorrect syntax, type \"help\"")
+			fmt.Fprintln(os.Stderr, "~ ERROR ~ incorrect syntax, type \"help\"")
 		} else {
-			fmt.Fprintf(os.Stderr, "ERROR ~ %s\n", errPrompts[0])
+			fmt.Fprintf(os.Stderr, "~ ERROR ~ %s\n", errPrompts[0])
 
 			for i := 1; i < len(errPrompts); i++ {
 				fmt.Fprintf(os.Stderr, "~ %s\n", errPrompts[i])
