@@ -26,19 +26,12 @@ It stores words and their relations as an undirected graph, allowing you to add 
 ## Installation
 
 ```bash
-git clone https://github.com/yourname/synodict-go.git
+git clone git@github.com:neimee8/synodict-go.git
 cd synodict-go
-go build -o synodict-go
+go run main.go
 ```
 
-## Usage
-
-### Run the program:
-```bash
-./synodict-go
-```
-
-### Example session:
+## Example session:
 ```
 type "help" for instructions
  > add "fast" "quick"
