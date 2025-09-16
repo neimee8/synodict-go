@@ -23,7 +23,7 @@ It stores words and their relations as an undirected graph, allowing you to add 
 - Safe confirmation prompts before overwriting data
 - Supports words with Latin, Cyrillic, diacritics, spaces, and hyphens
 
-## Installation
+## Usage
 
 ```bash
 git clone git@github.com:neimee8/synodict-go.git
@@ -31,7 +31,7 @@ cd synodict-go
 go run main.go
 ```
 
-## Example session:
+### Example session:
 ```
 type "help" for instructions
  > add "fast" "quick"
