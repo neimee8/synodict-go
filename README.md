@@ -156,7 +156,7 @@ Export dictionary (supports gob/csv)
 ```
 help
 ```
-Prints this help message
+Prints the help message
 
 ```
 done
